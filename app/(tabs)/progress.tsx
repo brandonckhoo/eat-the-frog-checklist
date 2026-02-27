@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { useAuthStore } from '../../src/store/authStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useProgressStore } from '../../src/store/progressStore';
 import { useTaskStore } from '../../src/store/taskStore';
@@ -22,6 +23,7 @@ function timeAgo(ts: number): string {
 export default function ProgressScreen() {
   const insets = useSafeAreaInsets();
   const { progress, streak, quests, badges } = useProgressStore();
+  const { user, signOut } = useAuthStore();
   const { completedTasks, loadCompleted } = useTaskStore();
 
   useEffect(() => {
@@ -97,6 +99,20 @@ export default function ProgressScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Badges</Text>
         <BadgeGrid badges={badges} />
+      </View>
+
+      {/* Account */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Account</Text>
+        <View style={styles.accountRow}>
+          <Text style={styles.accountEmail} numberOfLines={1}>{user?.email}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.signOutBtn, pressed && { opacity: 0.7 }]}
+            onPress={signOut}
+          >
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Completed tasks */}
@@ -215,6 +231,34 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.grey400,
     fontStyle: 'italic',
+  },
+  accountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.grey800,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.grey600,
+    gap: spacing.md,
+  },
+  accountEmail: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.grey300,
+  },
+  signOutBtn: {
+    backgroundColor: colors.grey700,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.grey600,
+  },
+  signOutText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.coral,
   },
   emptyCompleted: {
     ...typography.body,

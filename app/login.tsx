@@ -51,12 +51,14 @@ export default function LoginScreen() {
             {'\n\n'}Click the link to activate your account, then come back here to sign in.
           </Text>
         </View>
-        <Pressable
-          style={({ pressed }) => [styles.submitBtn, pressed && styles.btnPressed]}
-          onPress={() => { setCheckEmail(false); setMode('login'); }}
-        >
-          <Text style={styles.submitBtnText}>Back to Sign In</Text>
-        </Pressable>
+        <View style={styles.form}>
+          <Pressable
+            style={({ pressed }) => [styles.submitBtn, pressed && styles.btnPressed]}
+            onPress={() => { setCheckEmail(false); setMode('login'); }}
+          >
+            <Text style={styles.submitBtnText}>Back to Sign In</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }

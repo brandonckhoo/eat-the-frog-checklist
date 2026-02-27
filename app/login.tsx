@@ -14,6 +14,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [checkEmail, setCheckEmail] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit() {
     if (!email || !password) {
@@ -80,14 +81,19 @@ export default function LoginScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor={colors.grey400}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordWrap}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            placeholderTextColor={colors.grey400}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <Pressable style={styles.eyeBtn} onPress={() => setShowPassword(v => !v)}>
+            <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+          </Pressable>
+        </View>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -160,6 +166,28 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     fontSize: 15,
     color: colors.white,
+  },
+  passwordWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.grey700,
+    borderWidth: 1,
+    borderColor: colors.grey600,
+    borderRadius: radius.md,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 13,
+    fontSize: 15,
+    color: colors.white,
+  },
+  eyeBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
+  },
+  eyeText: {
+    fontSize: 16,
   },
   errorText: {
     ...typography.caption,

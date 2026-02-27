@@ -22,7 +22,7 @@ export function Header() {
         <View style={[styles.streakPill, streakActive && styles.streakPillActive]}>
           <Text style={styles.streakFire}>{streakActive ? '🔥' : '💤'}</Text>
           <Text style={[styles.streakCount, streakActive && styles.streakCountActive]}>
-            {streak.current}
+            {streak.current} {streak.current === 1 ? 'day' : 'days'}
           </Text>
         </View>
       </View>

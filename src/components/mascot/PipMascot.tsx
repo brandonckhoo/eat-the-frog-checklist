@@ -35,8 +35,8 @@ export function PipMascot({ state = 'idle', size = 48 }: PipMascotProps) {
     if (state === 'idle') {
       translateY.value = withRepeat(
         withSequence(
-          withTiming(-2, { duration: 1400, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0, { duration: 1400, easing: Easing.inOut(Easing.sin) })
+          withTiming(-8, { duration: 1200, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 1200, easing: Easing.inOut(Easing.sin) })
         ),
         -1,
         true

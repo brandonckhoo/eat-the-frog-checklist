@@ -26,6 +26,7 @@ interface ProgressState {
   badges: Badge[];
   isLoaded: boolean;
   load: () => Promise<void>;
+  reset: () => void;
   recordCompletion: (task: Task) => Promise<CompletionResult>;
 }
 
@@ -35,6 +36,10 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
   quests: [],
   badges: [],
   isLoaded: false,
+
+  reset: () => {
+    set({ progress: { xp: 0, level: 1 }, streak: { current: 0, best: 0 }, quests: [], badges: [], isLoaded: false });
+  },
 
   load: async () => {
     const [progress, streak] = await Promise.all([

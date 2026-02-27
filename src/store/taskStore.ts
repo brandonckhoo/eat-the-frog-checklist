@@ -8,6 +8,7 @@ interface TaskState {
   isLoaded: boolean;
   load: () => Promise<void>;
   loadCompleted: () => Promise<void>;
+  reset: () => void;
   addTask: (task: Task) => Promise<void>;
   updateTask: (task: Task) => Promise<void>;
   moveTask: (taskId: string, column: Column) => Promise<void>;
@@ -25,6 +26,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   load: async () => {
     const tasks = await taskRepository.getActive();
     set({ tasks, isLoaded: true });
+  },
+
+  reset: () => {
+    set({ tasks: [], completedTasks: [], isLoaded: false });
   },
 
   loadCompleted: async () => {

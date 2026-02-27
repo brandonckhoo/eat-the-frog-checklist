@@ -4,11 +4,15 @@ import { Platform, View, StyleSheet } from 'react-native';
 import { useEffect } from 'react';
 import { colors } from '../src/theme/tokens';
 import { useAuthStore } from '../src/store/authStore';
+import { useTaskStore } from '../src/store/taskStore';
+import { useProgressStore } from '../src/store/progressStore';
 
 function AuthRedirect() {
   const { user, loading, init } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const loadTasks = useTaskStore((s) => s.load);
+  const loadProgress = useProgressStore((s) => s.load);
 
   useEffect(() => {
     init();
@@ -23,6 +27,20 @@ function AuthRedirect() {
       router.replace('/(tabs)');
     }
   }, [user, loading, segments]);
+
+  const resetTasks = useTaskStore((s) => s.reset);
+  const resetProgress = useProgressStore((s) => s.reset);
+
+  // Load from Supabase on sign-in; clear stale data on sign-out
+  useEffect(() => {
+    if (user) {
+      loadTasks();
+      loadProgress();
+    } else {
+      resetTasks();
+      resetProgress();
+    }
+  }, [user, loadTasks, loadProgress, resetTasks, resetProgress]);
 
   return null;
 }

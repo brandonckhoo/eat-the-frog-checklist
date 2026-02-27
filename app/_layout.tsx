@@ -1,15 +1,45 @@
-import { Stack } from 'expo-router';
+import { Stack, Redirect } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Platform, View, StyleSheet } from 'react-native';
+import { Platform, View, StyleSheet, ActivityIndicator } from 'react-native';
+import { useEffect } from 'react';
 import { colors } from '../src/theme/tokens';
+import { useAuthStore } from '../src/store/authStore';
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { user, loading, init } = useAuthStore();
+
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.black800 }}>
+        <ActivityIndicator color={colors.yellow500} size="large" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
+
+  return <>{children}</>;
+}
 
 export default function RootLayout() {
+  const stackContent = (
+    <AuthGate>
+      <Stack screenOptions={{ headerShown: false }} />
+    </AuthGate>
+  );
+
   if (Platform.OS === 'web') {
     return (
       <SafeAreaProvider>
         <View style={styles.webRoot}>
           <View style={styles.phoneShadow}>
-            <Stack screenOptions={{ headerShown: false }} />
+            {stackContent}
           </View>
         </View>
       </SafeAreaProvider>

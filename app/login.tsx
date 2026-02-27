@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, Pressable, StyleSheet,
-  ActivityIndicator, TextInput, Alert,
+  ActivityIndicator, TextInput,
 } from 'react-native';
 import { PipMascot } from '../src/components/mascot/PipMascot';
 import { supabase } from '../src/data/supabaseClient';
@@ -13,6 +13,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [checkEmail, setCheckEmail] = useState(false);
 
   async function handleSubmit() {
     if (!email || !password) {
@@ -25,6 +26,7 @@ export default function LoginScreen() {
       if (mode === 'signup') {
         const { error: err } = await supabase.auth.signUp({ email, password });
         if (err) throw err;
+        setCheckEmail(true);
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
@@ -34,6 +36,28 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (checkEmail) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.hero}>
+          <PipMascot state="encouraging" size={88} />
+          <Text style={styles.title}>Check your email</Text>
+          <Text style={styles.subtitle}>
+            We sent a confirmation link to{'\n'}
+            <Text style={styles.emailHighlight}>{email}</Text>
+            {'\n\n'}Click the link to activate your account, then come back here to sign in.
+          </Text>
+        </View>
+        <Pressable
+          style={({ pressed }) => [styles.submitBtn, pressed && styles.btnPressed]}
+          onPress={() => { setCheckEmail(false); setMode('login'); }}
+        >
+          <Text style={styles.submitBtnText}>Back to Sign In</Text>
+        </Pressable>
+      </View>
+    );
   }
 
   return (
@@ -118,6 +142,10 @@ const styles = StyleSheet.create({
     color: colors.grey300,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  emailHighlight: {
+    color: colors.yellow500,
+    fontWeight: '600',
   },
   form: {
     width: '100%',

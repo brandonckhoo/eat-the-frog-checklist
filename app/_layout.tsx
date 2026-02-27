@@ -1,56 +1,51 @@
-import { Stack, Redirect } from 'expo-router';
+import { Stack, useSegments, useRouter } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Platform, View, StyleSheet, ActivityIndicator } from 'react-native';
+import { Platform, View, StyleSheet } from 'react-native';
 import { useEffect } from 'react';
 import { colors } from '../src/theme/tokens';
 import { useAuthStore } from '../src/store/authStore';
 
-function AuthGate({ children }: { children: React.ReactNode }) {
+function AuthRedirect() {
   const { user, loading, init } = useAuthStore();
+  const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
     init();
-  }, [init]);
+  }, []);
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.black800 }}>
-        <ActivityIndicator color={colors.yellow500} size="large" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (loading) return;
+    const inTabs = segments[0] === '(tabs)';
+    if (!user && inTabs) {
+      router.replace('/login');
+    } else if (user && !inTabs) {
+      router.replace('/(tabs)');
+    }
+  }, [user, loading, segments]);
 
-  if (!user) {
-    return <Redirect href="/login" />;
-  }
-
-  return <>{children}</>;
+  return null;
 }
 
 export default function RootLayout() {
-  const stackContent = (
-    <AuthGate>
+  const stack = (
+    <>
+      <AuthRedirect />
       <Stack screenOptions={{ headerShown: false }} />
-    </AuthGate>
+    </>
   );
 
   if (Platform.OS === 'web') {
     return (
       <SafeAreaProvider>
         <View style={styles.webRoot}>
-          <View style={styles.phoneShadow}>
-            {stackContent}
-          </View>
+          <View style={styles.phoneShadow}>{stack}</View>
         </View>
       </SafeAreaProvider>
     );
   }
 
-  return (
-    <SafeAreaProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </SafeAreaProvider>
-  );
+  return <SafeAreaProvider>{stack}</SafeAreaProvider>;
 }
 
 const styles = StyleSheet.create({
@@ -66,7 +61,6 @@ const styles = StyleSheet.create({
     maxHeight: 844,
     backgroundColor: colors.black800,
     overflow: 'hidden',
-    borderRadius: 0,
     // @ts-ignore web-only
     boxShadow: '0 8px 48px rgba(0,0,0,0.25)',
   },

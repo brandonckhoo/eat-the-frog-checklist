@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Pressable,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { useTaskStore } from '../../src/store/taskStore';
 import { useProgressStore } from '../../src/store/progressStore';
@@ -27,7 +28,7 @@ const COLUMN_NUMBERS: Record<Column, string> = {
 
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
-  const isWide = width >= 700;
+  const isWide = Platform.OS !== 'web' && width >= 700;
 
   const [activeColumn, setActiveColumn] = useState<Column>('do_first');
 

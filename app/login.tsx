@@ -1,46 +1,92 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View, Text, Pressable, StyleSheet,
+  ActivityIndicator, TextInput, Alert,
+} from 'react-native';
 import { PipMascot } from '../src/components/mascot/PipMascot';
-import { useAuthStore } from '../src/store/authStore';
+import { supabase } from '../src/data/supabaseClient';
 import { colors, spacing, radius, typography } from '../src/theme/tokens';
 
 export default function LoginScreen() {
-  const { signInWithGoogle, loading } = useAuthStore();
-  const [signingIn, setSigningIn] = React.useState(false);
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  async function handleGoogleSignIn() {
-    setSigningIn(true);
+  async function handleSubmit() {
+    if (!email || !password) {
+      setError('Please enter your email and password.');
+      return;
+    }
+    setLoading(true);
+    setError('');
     try {
-      await signInWithGoogle();
+      if (mode === 'signup') {
+        const { error: err } = await supabase.auth.signUp({ email, password });
+        if (err) throw err;
+      } else {
+        const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+        if (err) throw err;
+      }
+    } catch (e: any) {
+      setError(e.message ?? 'Something went wrong.');
     } finally {
-      setSigningIn(false);
+      setLoading(false);
     }
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
-        <PipMascot state="idle" size={96} />
+        <PipMascot state="idle" size={88} />
         <Text style={styles.title}>Eat the Frog</Text>
         <Text style={styles.subtitle}>
           Tackle your hardest task first.{'\n'}Sign in to save your progress.
         </Text>
       </View>
 
-      <View style={styles.actions}>
+      <View style={styles.form}>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor={colors.grey400}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor={colors.grey400}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
         <Pressable
-          style={({ pressed }) => [styles.googleBtn, pressed && styles.googleBtnPressed]}
-          onPress={handleGoogleSignIn}
-          disabled={signingIn || loading}
+          style={({ pressed }) => [styles.submitBtn, pressed && styles.btnPressed]}
+          onPress={handleSubmit}
+          disabled={loading}
         >
-          {signingIn ? (
+          {loading ? (
             <ActivityIndicator color={colors.dark} size="small" />
           ) : (
-            <>
-              <Text style={styles.googleLogo}>G</Text>
-              <Text style={styles.googleBtnText}>Continue with Google</Text>
-            </>
+            <Text style={styles.submitBtnText}>
+              {mode === 'login' ? 'Sign In' : 'Create Account'}
+            </Text>
           )}
+        </Pressable>
+
+        <Pressable onPress={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); }}>
+          <Text style={styles.toggleText}>
+            {mode === 'login'
+              ? "Don't have an account? Sign up"
+              : 'Already have an account? Sign in'}
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -61,7 +107,7 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   title: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '800',
     color: colors.yellow500,
     letterSpacing: -0.5,
@@ -73,31 +119,44 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  actions: {
+  form: {
     width: '100%',
     gap: spacing.md,
   },
-  googleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  input: {
+    backgroundColor: colors.grey700,
+    borderWidth: 1,
+    borderColor: colors.grey600,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 13,
+    fontSize: 15,
+    color: colors.white,
+  },
+  errorText: {
+    ...typography.caption,
+    color: colors.coral,
+    textAlign: 'center',
+  },
+  submitBtn: {
     backgroundColor: colors.yellow500,
     borderRadius: radius.lg,
     paddingVertical: 14,
-    paddingHorizontal: spacing.xl,
-    gap: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  googleBtnPressed: {
+  btnPressed: {
     opacity: 0.85,
   },
-  googleLogo: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.dark,
-  },
-  googleBtnText: {
+  submitBtnText: {
     fontSize: 16,
     fontWeight: '700',
     color: colors.dark,
+  },
+  toggleText: {
+    ...typography.caption,
+    color: colors.grey300,
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
 });

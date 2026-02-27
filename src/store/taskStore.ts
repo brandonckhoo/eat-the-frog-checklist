@@ -11,6 +11,7 @@ interface TaskState {
   addTask: (task: Task) => Promise<void>;
   updateTask: (task: Task) => Promise<void>;
   moveTask: (taskId: string, column: Column) => Promise<void>;
+  reorderTask: (taskId: string, column: Column, newIndex: number) => Promise<void>;
   completeTask: (taskId: string) => Promise<Task | null>;
   deleteTask: (taskId: string) => Promise<void>;
   getByColumn: (column: Column) => Task[];
@@ -51,6 +52,35 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === taskId ? updated : t)),
     }));
+  },
+
+  reorderTask: async (taskId, column, newIndex) => {
+    const allTasks = get().tasks;
+    const columnTasks = allTasks.filter((t) => t.column === column);
+    const fromIndex = columnTasks.findIndex((t) => t.id === taskId);
+    if (fromIndex === -1 || fromIndex === newIndex) return;
+
+    const reordered = [...columnTasks];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+
+    // Assign sort_order: null tasks (new) get 0 treatment via NULLS FIRST in DB.
+    // Explicitly ordered tasks get 1000, 2000, 3000, ...
+    const updated = reordered.map((task, idx) => ({
+      ...task,
+      sortOrder: (idx + 1) * 1000,
+    }));
+
+    set((s) => ({
+      tasks: [
+        ...s.tasks.filter((t) => t.column !== column),
+        ...updated,
+      ],
+    }));
+
+    await taskRepository.reorderBatch(
+      updated.map((t) => ({ id: t.id, sortOrder: t.sortOrder! }))
+    );
   },
 
   completeTask: async (taskId) => {

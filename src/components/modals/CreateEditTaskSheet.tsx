@@ -51,7 +51,6 @@ export function CreateEditTaskSheet({
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [column, setColumn] = useState<Column>('do_first');
-  const [difficulty, setDifficulty] = useState<1 | 2 | 3>(1);
   const [tags, setTags] = useState('');
 
   useEffect(() => {
@@ -60,13 +59,11 @@ export function CreateEditTaskSheet({
         setTitle(editingTask.title);
         setNotes(editingTask.notes ?? '');
         setColumn(editingTask.column);
-        setDifficulty(editingTask.difficulty);
         setTags(editingTask.tags?.join(', ') ?? '');
       } else {
         setTitle('');
         setNotes('');
         setColumn('do_first');
-        setDifficulty(1);
         setTags('');
       }
       Animated.spring(slideAnim, {
@@ -97,7 +94,6 @@ export function CreateEditTaskSheet({
           title: title.trim(),
           notes: notes.trim() || undefined,
           column,
-          difficulty,
           tags: parsedTags,
         }
       : {
@@ -105,13 +101,13 @@ export function CreateEditTaskSheet({
           title: title.trim(),
           notes: notes.trim() || undefined,
           column,
-          difficulty,
+          difficulty: 1,
           tags: parsedTags,
           createdAt: Date.now(),
         };
     onSave(task);
     onClose();
-  }, [title, notes, column, difficulty, tags, editingTask, onSave, onClose]);
+  }, [title, notes, column, tags, editingTask, onSave, onClose]);
 
   const handleComplete = useCallback(() => {
     if (!editingTask || !onComplete) return;
@@ -211,29 +207,6 @@ export function CreateEditTaskSheet({
                   </Pressable>
                 );
               })}
-            </View>
-
-            <Text style={styles.label}>Difficulty</Text>
-            <View style={styles.pillRow}>
-              {([1, 2, 3] as const).map((d) => (
-                <Pressable
-                  key={d}
-                  style={[
-                    styles.pill,
-                    difficulty === d && styles.pillActiveYellow,
-                  ]}
-                  onPress={() => setDifficulty(d)}
-                >
-                  <Text
-                    style={[
-                      styles.pillText,
-                      difficulty === d && { color: colors.yellow500 },
-                    ]}
-                  >
-                    {d === 1 ? 'Easy' : d === 2 ? 'Medium' : 'Hard'}
-                  </Text>
-                </Pressable>
-              ))}
             </View>
 
             <Text style={styles.label}>Tags (comma separated)</Text>

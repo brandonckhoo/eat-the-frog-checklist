@@ -84,4 +84,8 @@ export const taskRepository = {
     );
     return row?.count ?? 0;
   },
+
+  async reorderBatch(_updates: { id: string; sortOrder: number }[]): Promise<void> {
+    // sort_order not yet implemented for native SQLite
+  },
 };

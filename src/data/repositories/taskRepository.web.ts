@@ -8,9 +8,10 @@ function rowToTask(row: Record<string, unknown>): Task {
     notes: (row.notes as string | null) ?? undefined,
     column: row.task_column as Column,
     createdAt: row.created_at as number,
+    sortOrder: (row.sort_order as number | null) ?? undefined,
     dueAt: (row.due_at as number | null) ?? undefined,
     completedAt: (row.completed_at as number | null) ?? undefined,
-    difficulty: row.difficulty as 1 | 2 | 3,
+    difficulty: (row.difficulty as 1 | 2 | 3) ?? 1,
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
   };
 }
@@ -30,6 +31,7 @@ export const taskRepository = {
       .select('*')
       .eq('user_id', userId)
       .is('completed_at', null)
+      .order('sort_order', { ascending: true, nullsFirst: true })
       .order('created_at', { ascending: false });
     if (error) throw error;
     return (data ?? []).map(rowToTask);
@@ -44,9 +46,10 @@ export const taskRepository = {
       notes: task.notes ?? null,
       task_column: task.column,
       created_at: task.createdAt,
+      sort_order: task.sortOrder ?? null,
       due_at: task.dueAt ?? null,
       completed_at: task.completedAt ?? null,
-      difficulty: task.difficulty,
+      difficulty: task.difficulty ?? 1,
       tags: task.tags ?? [],
     });
     if (error) throw error;
@@ -59,9 +62,10 @@ export const taskRepository = {
         title: task.title,
         notes: task.notes ?? null,
         task_column: task.column,
+        sort_order: task.sortOrder ?? null,
         due_at: task.dueAt ?? null,
         completed_at: task.completedAt ?? null,
-        difficulty: task.difficulty,
+        difficulty: task.difficulty ?? 1,
         tags: task.tags ?? [],
       })
       .eq('id', task.id);
@@ -95,5 +99,13 @@ export const taskRepository = {
       .not('completed_at', 'is', null);
     if (error) throw error;
     return count ?? 0;
+  },
+
+  async reorderBatch(updates: { id: string; sortOrder: number }[]): Promise<void> {
+    await Promise.all(
+      updates.map(({ id, sortOrder }) =>
+        supabase.from('tasks').update({ sort_order: sortOrder }).eq('id', id)
+      )
+    );
   },
 };

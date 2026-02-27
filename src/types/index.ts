@@ -6,6 +6,7 @@ export interface Task {
   notes?: string;
   column: Column;
   createdAt: number;
+  sortOrder?: number;
   dueAt?: number;
   completedAt?: number;
   difficulty: 1 | 2 | 3;

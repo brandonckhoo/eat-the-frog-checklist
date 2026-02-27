@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { TaskCard } from './TaskCard';
 import { useDragDrop } from './DragDropContext';
+import { useTaskStore } from '../../store/taskStore';
 import type { Task, Column } from '../../types';
 import { COLUMN_CONFIG, colors, spacing, radius, typography } from '../../theme/tokens';
 
@@ -27,12 +28,28 @@ export function BoardColumn({
   width,
 }: BoardColumnProps) {
   const config = COLUMN_CONFIG[column];
-  const { registerColumn, startDrag, endDrag, draggingTaskId } = useDragDrop();
+  const { registerColumn } = useDragDrop();
+  const { reorderTask } = useTaskStore();
   const viewRef = useRef<View>(null);
 
+  // --- drag-reorder state ---
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropIdx, setDropIdx] = useState<number | null>(null);
+
+  // Refs always hold the latest values so the stable handleDragEnd callback
+  // can read them without stale-closure issues.
+  const dragStateRef = useRef({ draggingId: null as string | null, dropIdx: null as number | null });
+  dragStateRef.current = { draggingId, dropIdx };
+
+  const scrollScreenY = useRef(0);
+  const scrollOffset = useRef(0);
+  const cardHeights = useRef<number[]>([]);
+  const scrollContainerRef = useRef<View>(null);
+
+  // Register column layout for cross-column drag context
   const handleLayout = useCallback(
     (e: LayoutChangeEvent) => {
-      const { x, y, width: w, height: h } = e.nativeEvent.layout;
+      const { width: w, height: h } = e.nativeEvent.layout;
       viewRef.current?.measureInWindow((wx, wy) => {
         registerColumn(column, { x: wx, y: wy, width: w, height: h });
       });
@@ -40,12 +57,55 @@ export function BoardColumn({
     [column, registerColumn]
   );
 
-  const handleDragStart = useCallback(
-    (task: Task, absoluteX: number, absoluteY: number) => {
-      startDrag(task, absoluteX, absoluteY);
+  // Measure the scroll container's screen Y so we can convert absoluteY → relY
+  const handleScrollContainerLayout = useCallback(() => {
+    scrollContainerRef.current?.measureInWindow((_x, y) => {
+      scrollScreenY.current = y;
+    });
+  }, []);
+
+  const computeDropIdx = useCallback(
+    (absoluteY: number): number => {
+      const relY = absoluteY - scrollScreenY.current + scrollOffset.current;
+      let acc = 0;
+      for (let i = 0; i < tasks.length; i++) {
+        const h = cardHeights.current[i] ?? 56;
+        if (relY < acc + h * 0.5) return i;
+        acc += h;
+      }
+      return tasks.length;
     },
-    [startDrag]
+    [tasks.length]
   );
+
+  const handleDragStart = useCallback(
+    (taskId: string, absoluteY: number) => {
+      setDraggingId(taskId);
+      setDropIdx(computeDropIdx(absoluteY));
+    },
+    [computeDropIdx]
+  );
+
+  const handleDragUpdate = useCallback(
+    (absoluteY: number) => {
+      setDropIdx(computeDropIdx(absoluteY));
+    },
+    [computeDropIdx]
+  );
+
+  // Stable: reads from ref so it doesn't need draggingId/dropIdx as deps
+  const handleDragEnd = useCallback(() => {
+    const { draggingId: id, dropIdx: di } = dragStateRef.current;
+    const fromIdx = id ? tasks.findIndex((t) => t.id === id) : -1;
+    if (fromIdx !== -1 && di !== null) {
+      const newIdx = di > fromIdx ? di - 1 : di;
+      if (newIdx !== fromIdx) {
+        reorderTask(id!, column, newIdx);
+      }
+    }
+    setDraggingId(null);
+    setDropIdx(null);
+  }, [tasks, column, reorderTask]);
 
   return (
     <View
@@ -63,33 +123,66 @@ export function BoardColumn({
         </View>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        scrollEnabled
-      >
-        {tasks.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🐸</Text>
-            <Text style={styles.emptyText}>All clear!</Text>
-            <Text style={styles.emptySubtext}>Add a task to get started</Text>
-          </View>
-        ) : (
-          tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onPress={onPressTask}
-              onComplete={onCompleteTask}
-              onDragStart={handleDragStart}
-            />
-          ))
-        )}
-      </ScrollView>
+      <View ref={scrollContainerRef} style={styles.scrollContainer} onLayout={handleScrollContainerLayout}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={!draggingId}
+          onScroll={(e) => {
+            scrollOffset.current = e.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
+        >
+          {tasks.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>🐸</Text>
+              <Text style={styles.emptyText}>All clear!</Text>
+              <Text style={styles.emptySubtext}>Add a task to get started</Text>
+            </View>
+          ) : (
+            <>
+              {tasks.map((task, index) => (
+                <React.Fragment key={task.id}>
+                  {dropIdx === index && draggingId && <DropLine />}
+                  <View
+                    onLayout={(e) => {
+                      cardHeights.current[index] = e.nativeEvent.layout.height;
+                    }}
+                  >
+                    <TaskCard
+                      task={task}
+                      onPress={onPressTask}
+                      onComplete={onCompleteTask}
+                      isDragging={task.id === draggingId}
+                      onDragStart={handleDragStart}
+                      onDragUpdate={handleDragUpdate}
+                      onDragEnd={handleDragEnd}
+                    />
+                  </View>
+                </React.Fragment>
+              ))}
+              {dropIdx === tasks.length && draggingId && <DropLine />}
+            </>
+          )}
+        </ScrollView>
+      </View>
     </View>
   );
 }
+
+function DropLine() {
+  return <View style={dropLineStyle} />;
+}
+
+const dropLineStyle: import('react-native').ViewStyle = {
+  height: 2,
+  backgroundColor: colors.yellow500,
+  borderRadius: 1,
+  marginBottom: spacing.sm,
+  marginHorizontal: 4,
+  opacity: 0.8,
+};
 
 const styles = StyleSheet.create({
   column: {
@@ -125,6 +218,9 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  scrollContainer: {
+    flex: 1,
   },
   scroll: {
     flex: 1,

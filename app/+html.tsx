@@ -1,31 +1,5 @@
 import { ScrollViewStyleReset } from 'expo-router/html';
 
-// Frog favicon — mirrors the SVG shapes in PipMascot.tsx (idle state)
-const FROG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <ellipse cx="50" cy="97" rx="26" ry="4" fill="rgba(0,0,0,0.08)"/>
-  <ellipse cx="26" cy="90" rx="14" ry="7" fill="#388E3C" transform="rotate(-15 26 90)"/>
-  <ellipse cx="74" cy="90" rx="14" ry="7" fill="#388E3C" transform="rotate(15 74 90)"/>
-  <ellipse cx="50" cy="66" rx="37" ry="30" fill="#5CB85C"/>
-  <ellipse cx="50" cy="72" rx="23" ry="20" fill="#D4EDDA"/>
-  <ellipse cx="18" cy="72" rx="9" ry="5.5" fill="#449944" transform="rotate(-20 18 72)"/>
-  <ellipse cx="82" cy="72" rx="9" ry="5.5" fill="#449944" transform="rotate(20 82 72)"/>
-  <circle cx="33" cy="36" r="15" fill="#5CB85C"/>
-  <circle cx="67" cy="36" r="15" fill="#5CB85C"/>
-  <circle cx="33" cy="35" r="10" fill="#FFFFFF"/>
-  <circle cx="33" cy="35" r="5.5" fill="#2E7D32"/>
-  <circle cx="34" cy="35" r="3.5" fill="#1A1A17"/>
-  <circle cx="36" cy="31" r="2" fill="#FFFFFF"/>
-  <circle cx="67" cy="35" r="10" fill="#FFFFFF"/>
-  <circle cx="67" cy="35" r="5.5" fill="#2E7D32"/>
-  <circle cx="68" cy="35" r="3.5" fill="#1A1A17"/>
-  <circle cx="70" cy="31" r="2" fill="#FFFFFF"/>
-  <circle cx="44" cy="53" r="2.5" fill="#449944"/>
-  <circle cx="56" cy="53" r="2.5" fill="#449944"/>
-  <path d="M 38 60 Q 50 70 62 60" stroke="#2E7D32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-</svg>`;
-
-const FAVICON_HREF = `data:image/svg+xml,${encodeURIComponent(FROG_SVG)}`;
-
 export default function Root({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -36,7 +10,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
-        <link rel="icon" type="image/svg+xml" href={FAVICON_HREF} />
+        {/* Frog SVG favicon — file lives in public/favicon.svg */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <ScrollViewStyleReset />
       </head>
       <body>{children}</body>

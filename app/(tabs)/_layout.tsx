@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../src/theme/tokens';
 
 function TabIcon({ emoji, active }: { emoji: string; active: boolean }) {
@@ -7,6 +8,8 @@ function TabIcon({ emoji, active }: { emoji: string; active: boolean }) {
 }
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -16,6 +19,9 @@ export default function TabLayout() {
           borderTopColor: colors.grey600,
           borderTopWidth: 1,
           paddingHorizontal: 48,
+          // Adds padding for home indicator on iPhone; no-op on Android/desktop
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+          height: 49 + (insets.bottom > 0 ? insets.bottom : 8),
         },
         tabBarActiveTintColor: colors.yellow500,
         tabBarInactiveTintColor: colors.grey400,

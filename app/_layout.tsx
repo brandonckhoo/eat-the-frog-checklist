@@ -1,6 +1,6 @@
 import { Stack, useSegments, useRouter } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Platform, View, StyleSheet } from 'react-native';
+import { Platform, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useEffect } from 'react';
 import { colors } from '../src/theme/tokens';
 import { useAuthStore } from '../src/store/authStore';
@@ -46,6 +46,10 @@ function AuthRedirect() {
 }
 
 export default function RootLayout() {
+  const { width } = useWindowDimensions();
+  // Show phone frame only on desktop web (≥ 600px); on actual mobile browsers go full-screen
+  const isDesktopWeb = Platform.OS === 'web' && width >= 600;
+
   const stack = (
     <>
       <AuthRedirect />
@@ -53,7 +57,7 @@ export default function RootLayout() {
     </>
   );
 
-  if (Platform.OS === 'web') {
+  if (isDesktopWeb) {
     return (
       <SafeAreaProvider>
         <View style={styles.webRoot}>

@@ -117,6 +117,14 @@ export function CreateEditTaskSheet({
 
   const handleDelete = useCallback(() => {
     if (!editingTask || !onDelete) return;
+    if (Platform.OS === 'web') {
+      // Alert.alert is a no-op on web — use native browser confirm instead
+      if ((window as any).confirm('Remove this task?')) {
+        onDelete(editingTask.id);
+        onClose();
+      }
+      return;
+    }
     Alert.alert('Delete task', 'Remove this task?', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -144,7 +152,11 @@ export function CreateEditTaskSheet({
       >
         <Pressable style={styles.backdrop} onPress={onClose} />
         <Animated.View
-          style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}
+          style={[
+            styles.sheet,
+            { transform: [{ translateY: slideAnim }] },
+            Platform.OS === 'web' && styles.sheetWeb,
+          ]}
         >
           <View style={styles.handle} />
           <ScrollView
@@ -264,6 +276,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     maxHeight: '85%',
+  },
+  sheetWeb: {
+    width: 390,
+    alignSelf: 'center',
   },
   handle: {
     width: 40,

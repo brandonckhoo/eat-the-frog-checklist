@@ -2,18 +2,18 @@ import type { Quest, QuestType, Task } from '../types';
 
 function mondayOfWeek(date: Date): Date {
   const d = new Date(date);
-  const day = d.getDay();
+  const day = d.getUTCDay();
   const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + diff);
+  d.setUTCHours(0, 0, 0, 0);
   return d;
 }
 
 function sundayOfWeek(date: Date): Date {
   const monday = mondayOfWeek(date);
   const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  sunday.setUTCHours(23, 59, 59, 999);
   return sunday;
 }
 

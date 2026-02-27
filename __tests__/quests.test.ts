@@ -40,7 +40,7 @@ describe('generateWeeklyQuests', () => {
     const dates = quests.map((q) => q.startDate);
     const unique = new Set(dates);
     expect(unique.size).toBe(1);
-    expect(dates[0]).toBe('2026-01-06');
+    expect(dates[0]).toBe('2026-01-05');
   });
 
   it('all quests start with progress 0', () => {

@@ -9,9 +9,7 @@ function getToday(): string {
 }
 
 function getYesterday(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split('T')[0];
+  return toDateString(Date.now() - 24 * 60 * 60 * 1000);
 }
 
 export function computeStreak(current: Streak, completionTimestamp: number): Streak {
